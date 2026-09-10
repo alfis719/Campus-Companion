@@ -100,6 +100,14 @@ tr:hover td{background:#f8fafc}
 .search-results .item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px}
 .search-results .item:hover{background:#f1f5f9}
 .search-results .item .type{font-size:10px;color:var(--muted);text-transform:uppercase}
+.stops-list{display:flex;flex-direction:column;gap:6px}
+.stop-row{display:flex;gap:8px;align-items:center}
+.stop-row input[type="text"]{flex:2}
+.stop-row input[type="time"]{flex:1}
+.stop-row .remove-stop{background:var(--danger);color:#fff;padding:6px 10px;font-size:12px;flex:0 0 auto}
+.stops-display{font-size:12px;line-height:1.6;margin:0;padding-left:16px}
+.stops-display li{margin-bottom:2px}
+.stops-display li b{color:var(--primary);font-weight:600}
 </style>
 </head>
 <body>
@@ -118,7 +126,7 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let state = {
   user: null, profile: null, route: 'dashboard', adminRoute: 'admin-dashboard',
   sidebarOpen: false, semFilter: 'Fall 2026', modal: null, loading: true,
-  searchQuery: '', searchResults: []
+  searchQuery: '', searchResults: [], calSemFilter: 'all'
 };
 
 const $ = s => document.querySelector(s);
@@ -134,11 +142,11 @@ function toast(msg){ const t=document.createElement('div'); t.textContent=msg;
   document.body.appendChild(t); setTimeout(()=>t.remove(),2400); }
 
 /* ---------- DATA CACHE ---------- */
-let CACHE = { teachers:[], staff:[], courses:[], registered:[], routines:[], events:[], buses:[], results:[], materials:[], notices:[], attendance:[], assignments:[], submissions:[], profiles:[] };
+let CACHE = { teachers:[], staff:[], courses:[], registered:[], routines:[], events:[], buses:[], results:[], materials:[], notices:[], attendance:[], assignments:[], submissions:[], profiles:[], calendar:[] };
 
 async function loadAllData(){
   state.loading = true;
-  const [teachers, staff, courses, routines, events, buses, materials, notices] = await Promise.all([
+  const [teachers, staff, courses, routines, events, buses, materials, notices, calendar] = await Promise.all([
     db.from('teachers').select('*').order('name'),
     db.from('staff').select('*').order('name'),
     db.from('courses').select('*').order('code'),
@@ -146,7 +154,8 @@ async function loadAllData(){
     db.from('events').select('*').order('date'),
     db.from('buses').select('*').order('bus_number'),
     db.from('materials').select('*').order('upload_date',{ascending:false}),
-    db.from('notices').select('*').order('date',{ascending:false})
+    db.from('notices').select('*').order('date',{ascending:false}),
+    db.from('academic_calendar').select('*').order('start_date')
   ]);
   CACHE.teachers = teachers.data||[];
   CACHE.staff = staff.data||[];
@@ -156,6 +165,7 @@ async function loadAllData(){
   CACHE.buses = buses.data||[];
   CACHE.materials = materials.data||[];
   CACHE.notices = notices.data||[];
+  CACHE.calendar = calendar.data||[];
   if(state.profile){
     const [reg, res, att, asg, sub] = await Promise.all([
       db.from('registered_courses').select('*').eq('student_id', state.profile.id),
@@ -216,6 +226,7 @@ function subscribeRealtime(){
     .on('postgres_changes', { event: '*', schema: 'public', table: 'routines' }, () => loadAllData().then(render))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => loadAllData().then(render))
     .on('postgres_changes', { event: '*', schema: 'public', table: 'buses' }, () => loadAllData().then(render))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'academic_calendar' }, () => loadAllData().then(render))
     .subscribe();
 }
 
@@ -276,6 +287,9 @@ function globalSearch(query){
   CACHE.staff.filter(s =>
     s.name.toLowerCase().includes(q)
   ).forEach(s => results.push({ type:'Staff', label:s.name, route:'staff' }));
+  CACHE.calendar.filter(c =>
+    c.title.toLowerCase().includes(q)
+  ).forEach(c => results.push({ type:'Calendar', label:c.title, route:'calendar' }));
   return results.slice(0, 10);
 }
 
@@ -320,6 +334,7 @@ function renderAuthForm(){
 /* ---------- STUDENT LAYOUT ---------- */
 const STUDENT_NAV = [
   {k:'dashboard', label:'Dashboard'},
+  {k:'calendar', label:'Academic Calendar'},
   {k:'routine', label:'Routine'},
   {k:'classes', label:'Classes'},
   {k:'attendance', label:'Attendance'},
@@ -366,11 +381,12 @@ function renderStudentLayout(){
 }
 
 function pageTitle(k){
-  const m = {dashboard:'Dashboard',routine:'Routine',classes:'Classes',attendance:'Attendance',
+  const m = {dashboard:'Dashboard',calendar:'Academic Calendar',routine:'Routine',classes:'Classes',attendance:'Attendance',
     assignments:'Assignments',events:'Events',buses:'Bus Schedule',registered:'Registered Courses',
     allcourses:'All Courses',teachers:'Teachers',staff:'Staff',result:'Live Result',
     semresult:'Semester Result',cgpa:'CGPA Calculator',materials:'Study Material',contact:'Contact Us',
-    'admin-dashboard':'Admin Dashboard','admin-events':'Manage Events','admin-buses':'Manage Buses',
+    'admin-dashboard':'Admin Dashboard','admin-calendar':'Manage Academic Calendar',
+    'admin-events':'Manage Events','admin-buses':'Manage Buses',
     'admin-routines':'Manage Routine','admin-notices':'Manage Notices','admin-courses':'Manage Courses',
     'admin-teachers':'Manage Teachers','admin-staff':'Manage Staff','admin-materials':'Manage Study Materials',
     'admin-results':'Manage Results','admin-attendance':'Manage Attendance','admin-assignments':'Manage Assignments',
@@ -382,6 +398,7 @@ function pageTitle(k){
 function renderStudentPage(){
   switch(state.route){
     case 'dashboard': return pageDashboard();
+    case 'calendar': return pageCalendar();
     case 'routine': return pageRoutine();
     case 'classes': return pageClasses();
     case 'attendance': return pageAttendance();
@@ -452,6 +469,66 @@ function pageDashboard(){
         <div class="list-item"><div><b>${esc(n.title)}</b><div class="meta">${esc(n.content)}</div></div>
           <div class="meta">${fmtDate(n.date)}</div></div>`).join('') || '<div class="empty">No notices.</div>'}
     </div>`;
+}
+
+/* ---------- ACADEMIC CALENDAR PAGE ---------- */
+function pageCalendar(){
+  const today = todayStr();
+  const catColors = {
+    semester:'badge-blue', exam:'badge-red', registration:'badge-orange',
+    holiday:'badge-green', event:'badge-blue', deadline:'badge-orange'
+  };
+  const catIcons = {
+    semester:'📚', exam:'📝', registration:'📋', holiday:'🎉', event:'🎊', deadline:'⏰'
+  };
+
+  const semesters = [...new Set(CACHE.calendar.map(c=>c.semester||'General'))].sort();
+
+  return `<div class="section-head">
+      <div><h2>Academic Calendar</h2><div class="sub">All important semester dates at a glance</div></div>
+      <div class="sem-select"><label>Semester:</label>
+        <select onchange="app.setCalSem(this.value)">
+          <option value="all">All Semesters</option>
+          ${semesters.map(s=>`<option value="${esc(s)}" ${state.calSemFilter===s?'selected':''}>${esc(s)}</option>`).join('')}
+        </select></div>
+    </div>
+    ${CACHE.calendar.length ? (() => {
+      const filtered = state.calSemFilter && state.calSemFilter !== 'all'
+        ? CACHE.calendar.filter(c => (c.semester||'General') === state.calSemFilter)
+        : CACHE.calendar;
+      
+      const upcoming = filtered.filter(c => (c.end_date||c.start_date) >= today);
+      const past = filtered.filter(c => (c.end_date||c.start_date) < today).reverse();
+
+      const card = c => {
+        const isRange = c.end_date && c.end_date !== c.start_date;
+        const isToday = c.start_date <= today && (c.end_date ? c.end_date >= today : c.start_date === today);
+        return `<div class="card" style="margin-bottom:10px;border-left:4px solid ${isToday?'var(--primary)':'var(--border)'}">
+          <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
+            <div style="flex:1;min-width:200px">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="font-size:18px">${catIcons[c.category]||'📅'}</span>
+                <b style="font-size:14.5px">${esc(c.title)}</b>
+                ${isToday ? '<span class="badge badge-green">Today</span>' : ''}
+              </div>
+              ${c.description ? `<div style="color:var(--muted);font-size:12.5px;margin-bottom:8px">${esc(c.description)}</div>` : ''}
+              <div style="font-size:12.5px">
+                📅 <b>${fmtDate(c.start_date)}</b>${isRange ? ` → <b>${fmtDate(c.end_date)}</b>` : ''}
+                ${c.semester ? ` &nbsp;·&nbsp; 🎓 ${esc(c.semester)}` : ''}
+              </div>
+            </div>
+            <span class="badge ${catColors[c.category]||'badge-gray'}">${esc(c.category||'event')}</span>
+          </div>
+        </div>`;
+      };
+
+      return `
+        <h3 style="margin:6px 0 10px">Upcoming</h3>
+        ${upcoming.length ? upcoming.map(card).join('') : '<div class="empty">No upcoming events.</div>'}
+        <h3 style="margin:20px 0 10px">Past</h3>
+        ${past.length ? past.map(card).join('') : '<div class="empty">No past events.</div>'}
+      `;
+    })() : '<div class="empty">No academic calendar entries yet.</div>'}`;
 }
 
 function pageRoutine(){
@@ -565,12 +642,16 @@ function pageEvents(){
 }
 
 function pageBuses(){
-  return `<div class="section-head"><div><h2>Bus Schedule & Timing</h2></div></div>
+  return `<div class="section-head"><div><h2>Bus Schedule & Timing</h2><div class="sub">Routes, stops and timings</div></div></div>
     <div class="table-wrap"><table>
-      <thead><tr><th>Bus</th><th>Route</th><th>Arrival</th><th>Departure</th><th>Driver</th><th>Contact</th></tr></thead>
+      <thead><tr><th>Bus</th><th>Route</th><th>Stops & Arrival Times</th><th>Departure</th><th>Driver</th><th>Contact</th></tr></thead>
       <tbody>${CACHE.buses.length ? CACHE.buses.map(b=>`<tr>
         <td><span class="badge badge-blue">${esc(b.bus_number)}</span></td>
-        <td>${esc(b.route)}</td><td>${fmtTime(b.arrival_time)}</td><td>${fmtTime(b.departure_time)}</td>
+        <td>${esc(b.route)}</td>
+        <td>${b.stops && b.stops.length 
+             ? `<ul class="stops-display">${b.stops.map(s => `<li>${esc(s.name)} — <b>${esc(s.time)}</b></li>`).join('')}</ul>`
+             : '<span style="color:var(--muted)">—</span>'}</td>
+        <td>${fmtTime(b.departure_time)}</td>
         <td>${esc(b.driver_name||'—')}</td><td>${esc(b.driver_contact||'—')}</td>
       </tr>`).join('') : `<tr><td colspan="6" class="empty">No buses.</td></tr>`}</tbody>
     </table></div>`;
@@ -741,6 +822,7 @@ function pageContact(){
    ============================================================ */
 const ADMIN_NAV = [
   {k:'admin-dashboard', label:'Dashboard'},
+  {k:'admin-calendar', label:'Academic Calendar'},
   {k:'admin-notices', label:'Notices'},
   {k:'admin-routines', label:'Routine / Exams'},
   {k:'admin-events', label:'Events'},
@@ -783,6 +865,7 @@ function renderAdminLayout(){
 function renderAdminPage(){
   switch(state.adminRoute){
     case 'admin-dashboard': return adminDashboard();
+    case 'admin-calendar': return adminEntity('calendar','Academic Calendar');
     case 'admin-notices': return adminEntity('notices','Notices');
     case 'admin-routines': return adminEntity('routines','Routine / Exams');
     case 'admin-events': return adminEntity('events','Events');
@@ -809,6 +892,7 @@ function adminDashboard(){
     <div class="grid grid-2">
       <div class="card"><h3>Quick Actions</h3>
         <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <button class="btn-primary" onclick="app.openModal('calendar')">+ Calendar Entry</button>
           <button class="btn-primary" onclick="app.openModal('notices')">+ Notice</button>
           <button class="btn-primary" onclick="app.openModal('events')">+ Event</button>
           <button class="btn-primary" onclick="app.openModal('buses')">+ Bus</button>
@@ -849,6 +933,18 @@ function adminAttendance(){
 }
 
 const SCHEMAS = {
+  calendar: {label:'Calendar Entry', table:'academic_calendar', fields:[
+      {k:'title',label:'Title',type:'text',req:true},
+      {k:'description',label:'Description',type:'textarea'},
+      {k:'category',label:'Category',type:'select',
+        options:['semester','exam','registration','holiday','event','deadline'],req:true},
+      {k:'start_date',label:'Start Date',type:'date',req:true},
+      {k:'end_date',label:'End Date (optional, for ranges)',type:'date'},
+      {k:'semester',label:'Semester',type:'select',
+        options:['','Fall 2026','Spring 2027','Summer 2027']}],
+    columns:['title','category','start_date','end_date','semester'],
+    colLabels:{title:'Title',category:'Category',start_date:'Start',end_date:'End',semester:'Semester'},
+    formatters:{start_date:v=>fmtDate(v), end_date:v=>v?fmtDate(v):'—'}},
   notices: {label:'Notice', table:'notices', fields:[
       {k:'title',label:'Title',type:'text',req:true},
       {k:'content',label:'Content',type:'textarea',req:true},
@@ -866,12 +962,15 @@ const SCHEMAS = {
   buses: {label:'Bus', table:'buses', fields:[
       {k:'bus_number',label:'Bus Number',type:'text',req:true},
       {k:'route',label:'Route',type:'text',req:true},
-      {k:'arrival_time',label:'Arrival Time',type:'time'},
-      {k:'departure_time',label:'Departure Time',type:'time'},
+      {k:'departure_time',label:'Departure Time from Campus',type:'time'},
+      {k:'stops',label:'Stops & Arrival Times',type:'stops_list'},
       {k:'driver_name',label:'Driver Name',type:'text'},
       {k:'driver_contact',label:'Driver Contact',type:'text'}],
-    columns:['bus_number','route','arrival_time','departure_time','driver_contact'],
-    colLabels:{bus_number:'Bus',route:'Route',arrival_time:'Arrival',departure_time:'Departure',driver_contact:'Driver Contact'}},
+    columns:['bus_number','route','departure_time','driver_contact','stops'],
+    colLabels:{bus_number:'Bus',route:'Route',departure_time:'Departure',driver_contact:'Driver Contact',stops:'Stops'},
+    formatters:{stops:v=>Array.isArray(v)&&v.length
+      ? `<ul class="stops-display">${v.map(s=>`<li>${esc(s.name)} — <b>${esc(s.time)}</b></li>`).join('')}</ul>`
+      : '—'}},
   courses: {label:'Course', table:'courses', fields:[
       {k:'code',label:'Course Code',type:'text',req:true},
       {k:'title',label:'Title',type:'text',req:true},
@@ -989,6 +1088,7 @@ function renderModal(){
       </div>
     </div></div>`;
 }
+
 function renderField(f, data){
   const v = data[f.k] != null ? data[f.k] : '';
   const id = 'fld_'+f.k;
@@ -1008,6 +1108,18 @@ function renderField(f, data){
   else if(f.type==='datetime-local'){
     const dv = v ? new Date(v).toISOString().slice(0,16) : '';
     input = `<input id="${id}" type="datetime-local" value="${dv}">`;
+  }
+  else if(f.type==='stops_list'){
+    const stops = Array.isArray(v) ? v : [];
+    input = `<div id="stops_container" class="stops-list">
+        ${stops.map(s => `
+          <div class="stop-row" data-stop-row>
+            <input type="text" placeholder="Stop Name" value="${esc(s.name || '')}" class="stop-name">
+            <input type="time" value="${esc(s.time || '')}" class="stop-time">
+            <button type="button" class="remove-stop" onclick="this.parentElement.remove()">✕</button>
+          </div>`).join('')}
+      </div>
+      <button type="button" class="btn-ghost btn-sm" style="margin-top:8px" onclick="app.addStopRow()">+ Add Stop</button>`;
   }
   else input = `<input id="${id}" type="${f.type}" value="${esc(v)}">`;
   return `<div class="field"><label>${esc(f.label)}${f.req?' *':''}</label>${input}</div>`;
@@ -1068,6 +1180,19 @@ window.app = {
   },
   async logout(){ await db.auth.signOut(); state.user=null; state.profile=null; render(); },
   setSem(v){ state.semFilter=v; render(); },
+  setCalSem(v){ state.calSemFilter=v; render(); },
+  addStopRow(){
+    const container = document.getElementById('stops_container');
+    if(!container) return;
+    const row = document.createElement('div');
+    row.className = 'stop-row';
+    row.setAttribute('data-stop-row', '');
+    row.innerHTML = `
+      <input type="text" placeholder="Stop Name" class="stop-name">
+      <input type="time" class="stop-time">
+      <button type="button" class="remove-stop" onclick="this.parentElement.remove()">✕</button>`;
+    container.appendChild(row);
+  },
   addCgpaRow(){
     const grades = ['A+','A','A-','B+','B','B-','C+','C','D','F'];
     const row = document.createElement('div');
@@ -1159,13 +1284,21 @@ window.app = {
     const data = {};
     let fileToUpload = null;
     schema.fields.forEach(f=>{
+      if(f.type==='stops_list'){
+        const rows = document.querySelectorAll('[data-stop-row]');
+        data[f.k] = Array.from(rows).map(r => ({
+          name: r.querySelector('.stop-name').value.trim(),
+          time: r.querySelector('.stop-time').value
+        })).filter(s => s.name);
+        return;
+      }
       const el = document.getElementById('fld_'+f.k); if(!el) return;
       if(f.type==='checkbox') data[f.k]=el.checked;
       else if(f.type==='number') data[f.k] = el.value===''?null:Number(el.value);
       else if(f.type==='file'){ if(el.files[0]) fileToUpload = el.files[0]; }
       else data[f.k]=el.value || null;
     });
-    const missing = schema.fields.filter(f=>f.req && f.type!=='file' && (data[f.k]===undefined||data[f.k]===null||data[f.k]===''));
+    const missing = schema.fields.filter(f=>f.req && f.type!=='file' && f.type!=='stops_list' && (data[f.k]===undefined||data[f.k]===null||data[f.k]===''));
     if(missing.length){ toast('Please fill: '+missing.map(f=>f.label).join(', ')); return; }
     if(entity==='materials' && fileToUpload){
       const up = await uploadStudyMaterial(fileToUpload, data.course_id);
