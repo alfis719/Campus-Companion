@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FDT Portal – Uttara University</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1e40af">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--primary:#1e40af;--primary-light:#3b82f6;--bg:#f1f5f9;--card:#fff;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--danger:#dc2626;--success:#16a34a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+button{font-family:inherit;cursor:pointer;border:none;border-radius:6px;padding:8px 14px;font-size:14px}
+input,select,textarea{font-family:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;width:100%;background:#fff;color:var(--text)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--primary-light);border-color:transparent}
+a{color:var(--primary);text-decoration:none}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-light)}
+.btn-danger{background:var(--danger);color:#fff}
+.btn-ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-sm{padding:4px 10px;font-size:12px}
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(135deg,#1e40af,#3b82f6)}
+.auth-card{background:#fff;border-radius:12px;padding:32px;width:100%;max-width:440px;box-shadow:0 10px 40px rgba(0,0,0,.2)}
+.auth-card h1{font-size:22px;margin-bottom:6px;color:var(--primary)}
+.auth-card p.sub{color:var(--muted);margin-bottom:20px;font-size:13px}
+.field{margin-bottom:14px}
+.field label{display:block;margin-bottom:5px;font-weight:500;font-size:13px}
+.tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.tab{padding:8px 12px;background:none;border-radius:0;color:var(--muted);border-bottom:2px solid transparent}
+.tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.err{color:var(--danger);font-size:12px;margin-top:8px;min-height:16px}
+.hint{font-size:11.5px;color:var(--muted);margin-top:14px;text-align:center;line-height:1.7}
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;background:#0f172a;color:#cbd5e1;padding:16px 0;display:flex;flex-direction:column;position:fixed;top:0;bottom:0;left:0;overflow-y:auto;z-index:50;transition:transform .2s}
+.sidebar h2{color:#fff;font-size:16px;padding:0 20px 16px;border-bottom:1px solid #1e293b;margin-bottom:12px}
+.sidebar h2 small{display:block;color:#94a3b8;font-size:11px;font-weight:400;margin-top:3px}
+.nav-item{display:block;padding:10px 20px;color:#cbd5e1;font-size:13.5px;cursor:pointer;border-left:3px solid transparent}
+.nav-item:hover{background:#1e293b;color:#fff}
+.nav-item.active{background:#1e293b;color:#fff;border-left-color:var(--primary-light);font-weight:600}
+.nav-section{padding:12px 20px 4px;font-size:10.5px;text-transform:uppercase;color:#64748b;letter-spacing:.5px}
+.main{flex:1;margin-left:240px;display:flex;flex-direction:column;min-width:0}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+.topbar h1{font-size:18px}
+.user-info{display:flex;align-items:center;gap:12px;font-size:13px}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600}
+.content{padding:24px;flex:1}
+.menu-btn{display:none;background:none;font-size:22px;padding:4px 8px;color:var(--text)}
+.grid{display:grid;gap:16px}
+.grid-4{grid-template-columns:repeat(4,1fr)}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.grid-2{grid-template-columns:repeat(2,1fr)}
+@media(max-width:1000px){.grid-4{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.grid-4,.grid-3,.grid-2{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:18px}
+.card h3{font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.stat{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px}
+.stat .num{font-size:28px;font-weight:700;color:var(--primary)}
+.stat .lbl{font-size:12.5px;color:var(--muted);margin-top:4px}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+.badge-blue{background:#dbeafe;color:#1e40af}
+.badge-green{background:#dcfce7;color:#166534}
+.badge-orange{background:#ffedd5;color:#9a3412}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-gray{background:#e2e8f0;color:#475569}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:#f8fafc;font-weight:600;color:#475569;font-size:11.5px;text-transform:uppercase;letter-spacing:.3px}
+tr:hover td{background:#f8fafc}
+.table-wrap{overflow-x:auto;background:#fff;border:1px solid var(--border);border-radius:10px}
+.pin{background:#fef3c7;border-left:3px solid #f59e0b;padding:10px 14px;border-radius:6px;margin-bottom:10px}
+.pin b{display:block;margin-bottom:3px;color:#92400e}
+.list-item{padding:12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.list-item:last-child{border-bottom:none}
+.list-item .meta{font-size:12px;color:var(--muted);margin-top:3px}
+.empty{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px;flex-wrap:wrap}
+.section-head h2{font-size:20px}
+.section-head .sub{color:var(--muted);font-size:13px;margin-top:3px}
+.sem-select{display:flex;align-items:center;gap:10px;font-size:13px}
+.sem-select select{width:auto;min-width:150px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal{background:#fff;border-radius:10px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;padding:24px}
+.modal h3{font-size:17px;margin-bottom:16px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+@media(max-width:768px){
+.sidebar{transform:translateX(-100%)}
+.sidebar.open{transform:translateX(0)}
+.main{margin-left:0}
+.menu-btn{display:block}
+}
+.loader{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);font-size:14px}
+.search-box{position:relative;flex:1;max-width:400px;margin:0 16px}
+.search-box input{padding-left:32px}
+.search-box::before{content:"🔍";position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:13px;pointer-events:none}
+.search-results{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:8px;margin-top:4px;max-height:300px;overflow-y:auto;z-index:60;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.search-results .item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);font-size:13px}
+.search-results .item:hover{background:#f1f5f9}
+.search-results .item .type{font-size:10px;color:var(--muted);text-transform:uppercase}
+</style>
+</head>
+<body>
+<div id="root"><div class="loader">Loading...</div></div>
+<script>
+/* ============================================================
+   FDT Portal – Uttara University
+   Supabase-integrated
+   ============================================================ */
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+const { createClient } = supabase;
+const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let state = {
+  user: null, profile: null, route: 'dashboard', adminRoute: 'admin-dashboard',
+  sidebarOpen: false, semFilter: 'Fall 2026', modal: null, loading: true,
+  searchQuery: '', searchResults: []
+};
+
+const $ = s => document.querySelector(s);
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+function todayName(){ return DAYS[new Date().getDay()]; }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(s){ if(!s) return '—'; const d=new Date(s); if(isNaN(d)) return s; return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtTime(t){ return t ? String(t).slice(0,5) : '—'; }
+function gradePoint(g){ const m={'A+':4,'A':3.75,'A-':3.5,'B+':3.25,'B':3,'B-':2.75,'C+':2.5,'C':2.25,'D':2,'F':0}; return m[g]||0; }
+function toast(msg){ const t=document.createElement('div'); t.textContent=msg;
+  t.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 20px;border-radius:8px;z-index:200;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.2)';
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2400); }
+
+/* ---------- DATA CACHE ---------- */
+let CACHE = { teachers:[], staff:[], courses:[], registered:[], routines:[], events:[], buses:[], results:[], materials:[], notices:[], attendance:[], assignments:[], submissions:[], profiles:[] };
+
+async function loadAllData(){
+  state.loading = true;
+  const [teachers, staff, courses, routines, events, buses, materials, notices] = await Promise.all([
+    db.from('teachers').select('*').order('name'),
+    db.from('staff').select('*').order('name'),
+    db.from('courses').select('*').order('code'),
+    db.from('routines').select('*'),
+    db.from('events').select('*').order('date'),
+    db.from('buses').select('*').order('bus_number'),
+    db.from('materials').select('*').order('upload_date',{ascending:false}),
+    db.from('notices').select('*').order('date',{ascending:false})
+  ]);
+  CACHE.teachers = teachers.data||[];
+  CACHE.staff = staff.data||[];
+  CACHE.courses = courses.data||[];
+  CACHE.routines = routines.data||[];
+  CACHE.events = events.data||[];
+  CACHE.buses = buses.data||[];
+  CACHE.materials = materials.data||[];
+  CACHE.notices = notices.data||[];
+  if(state.profile){
+    const [reg, res, att, asg, sub] = await Promise.all([
+      db.from('registered_courses').select('*').eq('student_id', state.profile.id),
+      db.from('results').select('*').eq('student_id', state.profile.id),
+      db.from('attendance').select('*').eq('student_id', state.profile.id),
+      db.from('assignments').select('*').order('due_date'),
+      db.from('submissions').select('*').eq('student_id', state.profile.id)
+    ]);
+    CACHE.registered = reg.data||[];
+    CACHE.results = res.data||[];
+    CACHE.attendance = att.data||[];
+    CACHE.assignments = asg.data||[];
+    CACHE.submissions = sub.data||[];
+    if(state.profile.role==='admin'){
+      const { data: profiles } = await db.from('profiles').select('*').order('name');
+      CACHE.profiles = profiles||[];
+    }
+  }
+  state.loading = false;
+}
+
+function teacherName(id){ const t = CACHE.teachers.find(x=>x.id===id); return t ? t.name : '—'; }
+function courseById(id){ return CACHE.courses.find(c=>c.id===id); }
+function courseLabel(id){ const c=courseById(id); return c ? c.code+' – '+c.title : '—'; }
+function studentName(id){ const p = CACHE.profiles.find(x=>x.id===id); return p ? p.name : '—'; }
+
+/* ---------- AUTH ---------- */
+async function initAuth(){
+  const { data: { session } } = await db.auth.getSession();
+  if(session){
+    state.user = session.user;
+    const { data: profile } = await db.from('profiles').select('*').eq('id', session.user.id).single();
+    state.profile = profile;
+    if(profile) state.route = profile.role==='admin' ? 'admin-dashboard' : 'dashboard';
+  }
+  state.loading = false;
+  render();
+  db.auth.onAuthStateChange(async (event, session) => {
+    if(event==='SIGNED_IN' && session){
+      state.user = session.user;
+      const { data: profile } = await db.from('profiles').select('*').eq('id', session.user.id).single();
+      state.profile = profile;
+      if(profile) state.route = profile.role==='admin' ? 'admin-dashboard' : 'dashboard';
+      await loadAllData();
+      subscribeRealtime();
+      render();
+    } else if(event==='SIGNED_OUT'){
+      state.user = null; state.profile = null; render();
+    }
+  });
+}
+
+let realtimeChannel = null;
+function subscribeRealtime(){
+  if(realtimeChannel) db.removeChannel(realtimeChannel);
+  realtimeChannel = db.channel('portal-changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'notices' }, () => loadAllData().then(render))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'routines' }, () => loadAllData().then(render))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => loadAllData().then(render))
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'buses' }, () => loadAllData().then(render))
+    .subscribe();
+}
+
+/* ---------- RENDER ---------- */
+function render(){
+  if(state.loading){ $('#root').innerHTML = '<div class="loader">Loading...</div>'; return; }
+  if(!state.user || !state.profile){ $('#root').innerHTML = renderAuth(); return; }
+  $('#root').innerHTML = state.profile.role==='admin' ? renderAdminLayout() : renderStudentLayout();
+  bindNav();
+  bindSearch();
+}
+function bindNav(){
+  document.querySelectorAll('[data-route]').forEach(el=>{
+    el.onclick = () => {
+      const r = el.getAttribute('data-route');
+      if(state.profile.role==='admin') state.adminRoute=r; else state.route=r;
+      state.sidebarOpen=false; state.searchResults=[]; state.searchQuery=''; render();
+    };
+  });
+  const mb = $('#menuBtn'); if(mb) mb.onclick = () => { state.sidebarOpen=!state.sidebarOpen; render(); };
+}
+function bindSearch(){
+  const input = $('#globalSearch');
+  if(!input) return;
+  input.oninput = e => {
+    const q = e.target.value.trim().toLowerCase();
+    state.searchQuery = q;
+    if(!q){ state.searchResults = []; }
+    else { state.searchResults = globalSearch(q); }
+    const container = $('#searchResults');
+    if(container){
+      container.innerHTML = state.searchResults.length
+        ? state.searchResults.map((r,i)=>`<div class="item" onclick="app.goSearchResult(${i})"><span class="type">${esc(r.type)}</span><br>${esc(r.label)}</div>`).join('')
+        : (q ? '<div class="item" style="color:var(--muted)">No results</div>' : '');
+    }
+  };
+  document.addEventListener('click', e => {
+    if(!e.target.closest('.search-box')){
+      const c = $('#searchResults'); if(c) c.innerHTML='';
+    }
+  });
+}
+function globalSearch(query){
+  const q = query.toLowerCase();
+  const results = [];
+  CACHE.courses.filter(c =>
+    c.code.toLowerCase().includes(q) || c.title.toLowerCase().includes(q)
+  ).forEach(c => results.push({ type:'Course', label:`${c.code} – ${c.title}`, route:'allcourses' }));
+  CACHE.teachers.filter(t =>
+    t.name.toLowerCase().includes(q) || (t.designation||'').toLowerCase().includes(q)
+  ).forEach(t => results.push({ type:'Teacher', label:t.name, route:'teachers' }));
+  CACHE.materials.filter(m =>
+    m.title.toLowerCase().includes(q)
+  ).forEach(m => results.push({ type:'Material', label:m.title, route:'materials' }));
+  CACHE.notices.filter(n =>
+    n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q)
+  ).forEach(n => results.push({ type:'Notice', label:n.title, route:'dashboard' }));
+  CACHE.staff.filter(s =>
+    s.name.toLowerCase().includes(q)
+  ).forEach(s => results.push({ type:'Staff', label:s.name, route:'staff' }));
+  return results.slice(0, 10);
+}
+
+/* ---------- AUTH PAGE ---------- */
+let authTab = 'login';
+function renderAuth(){
+  return `<div class="auth-wrap"><div class="auth-card">
+    <h1>FDT Portal</h1>
+    <p class="sub">Fashion Design & Technology · Uttara University</p>
+    <div class="tabs">
+      <button class="tab ${authTab==='login'?'active':''}" onclick="app.setAuthTab('login')">Student Login</button>
+      <button class="tab ${authTab==='signup'?'active':''}" onclick="app.setAuthTab('signup')">Sign Up</button>
+      <button class="tab ${authTab==='admin'?'active':''}" onclick="app.setAuthTab('admin')">Admin</button>
+    </div>
+    <div id="authForm">${renderAuthForm()}</div>
+    <div class="err" id="authErr"></div>
+    <p class="hint">Sign up as a student to get started.<br>Admin access is granted from the Supabase dashboard.</p>
+  </div></div>`;
+}
+function renderAuthForm(){
+  if(authTab==='login') return `
+    <div class="field"><label>Email</label><input id="li_email" type="email" placeholder="you@student.uttara.ac.bd"></div>
+    <div class="field"><label>Password</label><input id="li_pass" type="password"></div>
+    <button class="btn-primary" style="width:100%" onclick="app.doLogin()">Login</button>`;
+  if(authTab==='signup') return `
+    <div class="field"><label>Full Name</label><input id="su_name" type="text"></div>
+    <div class="field"><label>Student ID</label><input id="su_sid" type="text" placeholder="FDT-2021-001"></div>
+    <div class="field"><label>Email</label><input id="su_email" type="email"></div>
+    <div class="row">
+      <div class="field"><label>Semester</label>
+        <select id="su_sem"><option>Fall 2026</option><option>Spring 2027</option><option>Summer 2027</option></select></div>
+      <div class="field"><label>Batch</label><input id="su_batch" type="text" placeholder="2021"></div>
+    </div>
+    <div class="field"><label>Password</label><input id="su_pass" type="password"></div>
+    <button class="btn-primary" style="width:100%" onclick="app.doSignup()">Create Account</button>`;
+  return `
+    <div class="field"><label>Admin Email</label><input id="li_email" type="email"></div>
+    <div class="field"><label>Password</label><input id="li_pass" type="password"></div>
+    <button class="btn-primary" style="width:100%" onclick="app.doLogin()">Admin Login</button>`;
+}
+
+/* ---------- STUDENT LAYOUT ---------- */
+const STUDENT_NAV = [
+  {k:'dashboard', label:'Dashboard'},
+  {k:'routine', label:'Routine'},
+  {k:'classes', label:'Classes'},
+  {k:'attendance', label:'Attendance'},
+  {k:'assignments', label:'Assignments'},
+  {k:'events', label:'Events'},
+  {k:'buses', label:'Bus Schedule'},
+  {k:'registered', label:'Registered Courses'},
+  {k:'allcourses', label:'All Courses'},
+  {k:'teachers', label:'Teachers'},
+  {k:'staff', label:'Staff'},
+  {k:'result', label:'Live Result'},
+  {k:'semresult', label:'Semester Result'},
+  {k:'cgpa', label:'CGPA Calculator'},
+  {k:'materials', label:'Study Material'},
+  {k:'contact', label:'Contact Us'}
+];
+function renderStudentLayout(){
+  const p = state.profile;
+  return `<div class="app">
+    <aside class="sidebar ${state.sidebarOpen?'open':''}">
+      <h2>FDT Portal<small>Uttara University</small></h2>
+      ${STUDENT_NAV.map(n=>`<div class="nav-item ${state.route===n.k?'active':''}" data-route="${n.k}">${n.label}</div>`).join('')}
+      <div class="nav-section">Account</div>
+      <div class="nav-item" onclick="app.logout()">Logout</div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <button class="menu-btn" id="menuBtn">☰</button>
+          <h1>${pageTitle(state.route)}</h1>
+        </div>
+        <div class="search-box">
+          <input id="globalSearch" type="text" placeholder="Search courses, teachers, notices..." value="${esc(state.searchQuery)}">
+          <div class="search-results" id="searchResults"></div>
+        </div>
+        <div class="user-info">
+          <div class="avatar">${esc((p?.name||'S')[0])}</div>
+          <div><div style="font-weight:600">${esc(p?.name||'')}</div>
+          <div style="font-size:11px;color:var(--muted)">${esc(p?.student_id||'')}</div></div>
+        </div>
+      </div>
+      <div class="content">${renderStudentPage()}</div>
+    </div></div>`;
+}
+
+function pageTitle(k){
+  const m = {dashboard:'Dashboard',routine:'Routine',classes:'Classes',attendance:'Attendance',
+    assignments:'Assignments',events:'Events',buses:'Bus Schedule',registered:'Registered Courses',
+    allcourses:'All Courses',teachers:'Teachers',staff:'Staff',result:'Live Result',
+    semresult:'Semester Result',cgpa:'CGPA Calculator',materials:'Study Material',contact:'Contact Us',
+    'admin-dashboard':'Admin Dashboard','admin-events':'Manage Events','admin-buses':'Manage Buses',
+    'admin-routines':'Manage Routine','admin-notices':'Manage Notices','admin-courses':'Manage Courses',
+    'admin-teachers':'Manage Teachers','admin-staff':'Manage Staff','admin-materials':'Manage Study Materials',
+    'admin-results':'Manage Results','admin-attendance':'Manage Attendance','admin-assignments':'Manage Assignments',
+    'admin-registered':'Manage Registrations'};
+  return m[k]||k;
+}
+
+/* ---------- STUDENT PAGES ---------- */
+function renderStudentPage(){
+  switch(state.route){
+    case 'dashboard': return pageDashboard();
+    case 'routine': return pageRoutine();
+    case 'classes': return pageClasses();
+    case 'attendance': return pageAttendance();
+    case 'assignments': return pageAssignments();
+    case 'events': return pageEvents();
+    case 'buses': return pageBuses();
+    case 'registered': return pageRegistered();
+    case 'allcourses': return pageAllCourses();
+    case 'teachers': return pageTeachers();
+    case 'staff': return pageStaff();
+    case 'result': return pageResult();
+    case 'semresult': return pageSemResult();
+    case 'cgpa': return pageCgpa();
+    case 'materials': return pageMaterials();
+    case 'contact': return pageContact();
+    default: return pageDashboard();
+  }
+}
+
+function pageDashboard(){
+  const today = todayName();
+  const todayClasses = CACHE.routines.filter(r=>r.type==='class' && r.day===today);
+  const newNotices = CACHE.notices.filter(n=>{ const d=new Date(n.date); const diff=(Date.now()-d.getTime())/(1000*60*60*24); return diff<=7; });
+  const pinned = CACHE.notices.filter(n=>n.pinned);
+  const upcomingExams = CACHE.routines.filter(r=>['exam','quiz','presentation','assignment'].includes(r.type) && r.date && r.date>=todayStr())
+    .sort((a,b)=>a.date.localeCompare(b.date)).slice(0,6);
+  return `
+    <div class="grid grid-4" style="margin-bottom:20px">
+      <div class="stat"><div class="num">${todayClasses.length}</div><div class="lbl">Classes Today</div></div>
+      <div class="stat"><div class="num">${newNotices.length}</div><div class="lbl">New Notices</div></div>
+      <div class="stat"><div class="num">${pinned.length}</div><div class="lbl">Pinned Messages</div></div>
+      <div class="stat"><div class="num">${upcomingExams.length}</div><div class="lbl">Upcoming Exams</div></div>
+    </div>
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>Today's Routine (${today})</h3>
+        ${todayClasses.length ? todayClasses.map(r=>`
+          <div class="list-item">
+            <div><b>${esc(courseLabel(r.course_id))}</b>
+              <div class="meta">${fmtTime(r.start_time)} – ${fmtTime(r.end_time)} · Room ${esc(r.room||'')}</div>
+              <div class="meta">${esc(teacherName(r.teacher_id))}</div>
+            </div>
+            <span class="badge badge-blue">Class</span>
+          </div>`).join('') : '<div class="empty">No classes today.</div>'}
+      </div>
+      <div class="card">
+        <h3>Pinned Messages</h3>
+        ${pinned.length ? pinned.map(n=>`
+          <div class="pin"><b>${esc(n.title)}</b>
+            <div style="font-size:12.5px;color:#78350f">${esc(n.content)}</div>
+            <div style="font-size:11px;color:#a16207;margin-top:4px">${fmtDate(n.date)}</div>
+          </div>`).join('') : '<div class="empty">No pinned messages.</div>'}
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Upcoming Exam / Quiz / Submission Dates</h3>
+      ${upcomingExams.length ? `<div class="table-wrap"><table>
+        <thead><tr><th>Type</th><th>Title</th><th>Course</th><th>Date</th><th>Time</th><th>Room</th></tr></thead>
+        <tbody>${upcomingExams.map(r=>`<tr>
+          <td><span class="badge ${r.type==='exam'?'badge-red':r.type==='quiz'?'badge-orange':r.type==='assignment'?'badge-green':'badge-blue'}">${esc(r.type)}</span></td>
+          <td>${esc(r.title||'—')}</td><td>${esc(courseLabel(r.course_id))}</td>
+          <td>${fmtDate(r.date)}</td><td>${fmtTime(r.start_time)}</td><td>${esc(r.room||'—')}</td>
+        </tr>`).join('')}</tbody></table></div>` : '<div class="empty">No upcoming exams.</div>'}
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Recent Notices</h3>
+      ${CACHE.notices.slice(0,5).map(n=>`
+        <div class="list-item"><div><b>${esc(n.title)}</b><div class="meta">${esc(n.content)}</div></div>
+          <div class="meta">${fmtDate(n.date)}</div></div>`).join('') || '<div class="empty">No notices.</div>'}
+    </div>`;
+}
+
+function pageRoutine(){
+  const rows = CACHE.routines.filter(r=>['exam','quiz','presentation','assignment'].includes(r.type) && r.date)
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  return `<div class="section-head">
+      <div><h2>Routine</h2><div class="sub">Exam, quiz, presentation and assignment schedule</div></div>
+      <button class="btn-ghost" onclick="app.exportIcs()">📥 Export to Calendar</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Type</th><th>Title</th><th>Course</th><th>Date</th><th>Time</th><th>Room</th><th>Teacher</th></tr></thead>
+      <tbody>${rows.length ? rows.map(r=>`<tr>
+        <td><span class="badge ${r.type==='exam'?'badge-red':r.type==='quiz'?'badge-orange':r.type==='assignment'?'badge-green':'badge-blue'}">${esc(r.type)}</span></td>
+        <td>${esc(r.title||'—')}</td><td>${esc(courseLabel(r.course_id))}</td>
+        <td>${fmtDate(r.date)}</td><td>${fmtTime(r.start_time)}</td>
+        <td>${esc(r.room||'—')}</td><td>${esc(teacherName(r.teacher_id))}</td>
+      </tr>`).join('') : `<tr><td colspan="7" class="empty">No scheduled exams.</td></tr>`}</tbody>
+    </table></div>`;
+}
+
+function pageClasses(){
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Saturday'];
+  const html = days.map(day=>{
+    const list = CACHE.routines.filter(r=>r.type==='class' && r.day===day).sort((a,b)=>(a.start_time||'').localeCompare(b.start_time||''));
+    if(!list.length) return '';
+    return `<div class="card" style="margin-bottom:16px"><h3>${day}</h3>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Time</th><th>Course</th><th>Room</th><th>Teacher</th></tr></thead>
+        <tbody>${list.map(r=>`<tr><td>${fmtTime(r.start_time)} – ${fmtTime(r.end_time)}</td>
+          <td>${esc(courseLabel(r.course_id))}</td><td>${esc(r.room||'')}</td>
+          <td>${esc(teacherName(r.teacher_id))}</td></tr>`).join('')}</tbody>
+      </table></div></div>`;
+  }).join('');
+  return `<div class="section-head"><div><h2>Classes</h2><div class="sub">Weekly class schedule</div></div></div>
+    ${html || '<div class="empty">No class routine available.</div>'}`;
+}
+
+function pageAttendance(){
+  const byCourse = {};
+  CACHE.attendance.forEach(a => {
+    (byCourse[a.course_id] = byCourse[a.course_id] || []).push(a);
+  });
+  return `<div class="section-head"><div><h2>Attendance</h2><div class="sub">Your attendance per course</div></div></div>
+    ${Object.keys(byCourse).length ? `<div class="grid grid-3">
+      ${Object.entries(byCourse).map(([cid, records]) => {
+        const present = records.filter(r => r.status === 'present' || r.status === 'late').length;
+        const pct = records.length ? Math.round(present / records.length * 100) : 0;
+        const color = pct >= 75 ? 'var(--success)' : pct >= 60 ? '#d97706' : 'var(--danger)';
+        return `<div class="card">
+          <h3>${esc(courseById(cid)?.code || '—')}</h3>
+          <div style="font-size:28px;font-weight:700;color:${color}">${pct}%</div>
+          <div style="font-size:12px;color:var(--muted)">${present}/${records.length} classes attended</div>
+          ${pct < 75 ? '<div style="margin-top:8px;font-size:12px;color:var(--danger)">⚠️ Below 75% threshold</div>' : ''}
+        </div>`;
+      }).join('')}
+    </div>` : '<div class="empty">No attendance records yet.</div>'}`;
+}
+
+function pageAssignments(){
+  const subMap = {};
+  CACHE.submissions.forEach(s => subMap[s.assignment_id] = s);
+  return `<div class="section-head"><div><h2>Assignments</h2><div class="sub">Submit and track your assignments</div></div></div>
+    ${CACHE.assignments.length ? CACHE.assignments.map(a => {
+      const sub = subMap[a.id];
+      const due = new Date(a.due_date);
+      const isLate = new Date() > due && !sub;
+      return `<div class="card" style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+          <div>
+            <h3 style="margin-bottom:4px">${esc(a.title)}</h3>
+            <div style="font-size:12.5px;color:var(--muted)">${esc(courseLabel(a.course_id))}</div>
+            <div style="font-size:12.5px;margin-top:6px">Due: ${due.toLocaleString()}</div>
+            ${a.description ? `<div style="font-size:12.5px;margin-top:6px;color:var(--muted)">${esc(a.description)}</div>` : ''}
+          </div>
+          <div>
+            ${sub
+              ? `<span class="badge badge-green">Submitted${sub.marks!=null?' · '+sub.marks:''}</span>`
+              : isLate
+                ? `<span class="badge badge-red">Overdue</span>`
+                : `<span class="badge badge-orange">Pending</span>`}
+          </div>
+        </div>
+        <div style="margin-top:12px">
+          <input type="file" id="sub_file_${a.id}" accept=".pdf,.doc,.docx,.zip,.png,.jpg">
+          <button class="btn-primary btn-sm" style="margin-top:8px"
+            onclick="app.submitAssignment('${a.id}')">
+            ${sub ? 'Re-submit' : 'Submit'}
+          </button>
+        </div>
+        ${sub?.feedback ? `<div class="pin" style="margin-top:10px"><b>Feedback</b>${esc(sub.feedback)}</div>` : ''}
+      </div>`;
+    }).join('') : '<div class="empty">No assignments yet.</div>'}`;
+}
+
+function pageEvents(){
+  const today = todayStr();
+  const upcoming = CACHE.events.filter(e=>e.date>=today).sort((a,b)=>a.date.localeCompare(b.date));
+  const past = CACHE.events.filter(e=>e.date<today).sort((a,b)=>b.date.localeCompare(a.date));
+  const card = e => `<div class="card" style="margin-bottom:12px">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div><h3 style="margin-bottom:6px">${esc(e.title)}</h3>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:8px">${esc(e.description||'')}</div>
+        <div style="font-size:12.5px">📅 ${fmtDate(e.date)} · ⏰ ${fmtTime(e.time)} · 📍 ${esc(e.location||'—')}</div>
+      </div><span class="badge ${e.date>=today?'badge-green':'badge-gray'}">${e.date>=today?'Upcoming':'Past'}</span>
+    </div></div>`;
+  return `<div class="section-head"><div><h2>Events</h2></div></div>
+    <h3 style="margin:6px 0 10px">Upcoming</h3>
+    ${upcoming.length ? upcoming.map(card).join('') : '<div class="empty">No upcoming events.</div>'}
+    <h3 style="margin:20px 0 10px">Past</h3>
+    ${past.length ? past.map(card).join('') : '<div class="empty">No past events.</div>'}`;
+}
+
+function pageBuses(){
+  return `<div class="section-head"><div><h2>Bus Schedule & Timing</h2></div></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Bus</th><th>Route</th><th>Arrival</th><th>Departure</th><th>Driver</th><th>Contact</th></tr></thead>
+      <tbody>${CACHE.buses.length ? CACHE.buses.map(b=>`<tr>
+        <td><span class="badge badge-blue">${esc(b.bus_number)}</span></td>
+        <td>${esc(b.route)}</td><td>${fmtTime(b.arrival_time)}</td><td>${fmtTime(b.departure_time)}</td>
+        <td>${esc(b.driver_name||'—')}</td><td>${esc(b.driver_contact||'—')}</td>
+      </tr>`).join('') : `<tr><td colspan="6" class="empty">No buses.</td></tr>`}</tbody>
+    </table></div>`;
+}
+
+function pageRegistered(){
+  const sem = state.semFilter;
+  const list = CACHE.registered.filter(r=>r.student_id===state.profile.id && r.semester===sem);
+  const sems = ['Fall 2026','Spring 2027','Summer 2027'];
+  return `<div class="section-head">
+      <div><h2>Registered Courses</h2></div>
+      <div class="sem-select"><label>Semester:</label>
+        <select onchange="app.setSem(this.value)">
+          ${sems.map(s=>`<option ${s===sem?'selected':''}>${s}</option>`).join('')}
+        </select></div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Course Code</th><th>Course Title</th><th>Credits</th><th>Teacher</th><th>Semester</th></tr></thead>
+      <tbody>${list.length ? list.map(r=>{
+        const c = courseById(r.course_id);
+        return `<tr><td><b>${esc(c?c.code:'—')}</b></td>
+          <td>${esc(c?c.title:'—')}</td><td>${esc(c?c.credits:'—')}</td>
+          <td>${esc(teacherName(c?c.teacher_id:''))}</td><td>${esc(r.semester)}</td></tr>`;
+      }).join('') : `<tr><td colspan="5" class="empty">No registered courses for ${esc(sem)}.</td></tr>`}</tbody>
+    </table></div>`;
+}
+
+function pageAllCourses(){
+  return `<div class="section-head"><div><h2>All Courses</h2><div class="sub">BSc in Fashion Design & Technology – Full Curriculum</div></div></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Code</th><th>Title</th><th>Credits</th><th>Category</th><th>Prerequisite</th><th>Teacher</th></tr></thead>
+      <tbody>${CACHE.courses.map(c=>`<tr>
+        <td><b>${esc(c.code)}</b></td><td>${esc(c.title)}</td><td>${esc(c.credits)}</td>
+        <td><span class="badge ${c.category==='core'?'badge-blue':c.category==='ged'?'badge-green':'badge-orange'}">${esc(c.category||'')}</span></td>
+        <td>${esc(c.prereq||'None')}</td><td>${esc(teacherName(c.teacher_id))}</td>
+      </tr>`).join('')}</tbody></table></div>`;
+}
+
+function pageTeachers(){
+  return `<div class="section-head"><div><h2>Teachers</h2><div class="sub">Faculty members of FDT Department</div></div></div>
+    <div class="grid grid-3">${CACHE.teachers.map(t=>`
+      <div class="card">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+          <div class="avatar" style="width:44px;height:44px;font-size:16px">${esc(t.name[0])}</div>
+          <div><div style="font-weight:600">${esc(t.name)}</div>
+            <div style="font-size:12px;color:var(--muted)">${esc(t.designation||'')}</div></div>
+        </div>
+        <div style="font-size:12.5px;line-height:1.8">
+          ✉️ ${esc(t.email||'—')}<br>📞 ${esc(t.phone||'—')}<br>🚪 ${esc(t.office||'—')}
+        </div></div>`).join('')}</div>`;
+}
+
+function pageStaff(){
+  return `<div class="section-head"><div><h2>Staff</h2></div></div>
+    <div class="grid grid-3">${CACHE.staff.map(s=>`
+      <div class="card">
+        <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px">
+          <div class="avatar" style="width:44px;height:44px;font-size:16px;background:#0f172a">${esc(s.name[0])}</div>
+          <div><div style="font-weight:600">${esc(s.name)}</div>
+            <div style="font-size:12px;color:var(--muted)">${esc(s.role||'')}</div></div>
+        </div>
+        <div style="font-size:12.5px;line-height:1.8">✉️ ${esc(s.email||'—')}<br>📞 ${esc(s.phone||'—')}</div>
+      </div>`).join('')}</div>`;
+}
+
+function pageResult(){
+  const mine = CACHE.results;
+  return `<div class="section-head"><div><h2>Live Result</h2><div class="sub">Your marks breakdown per course</div></div></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Course</th><th>Quiz 1</th><th>Quiz 2</th><th>Quiz 3</th><th>Quiz Avg</th>
+      <th>Mid Term</th><th>Final</th><th>Total</th><th>Grade</th></tr></thead>
+      <tbody>${mine.length ? mine.map(r=>`<tr>
+        <td><b>${esc(courseLabel(r.course_id))}</b></td>
+        <td>${r.quiz1 ?? '—'}</td><td>${r.quiz2 ?? '—'}</td><td>${r.quiz3 ?? '—'}</td>
+        <td>${r.quiz_avg ?? '—'}</td><td>${r.mid_term ?? '—'}</td><td>${r.final ?? '—'}</td>
+        <td><b>${r.total ?? '—'}</b></td>
+        <td><span class="badge ${r.grade==='F'?'badge-red':'badge-green'}">${esc(r.grade||'—')}</span></td>
+      </tr>`).join('') : `<tr><td colspan="9" class="empty">No results published yet.</td></tr>`}</tbody>
+    </table></div>`;
+}
+
+function pageSemResult(){
+  const mine = CACHE.results;
+  const semMap = {};
+  mine.forEach(r=>{
+    const reg = CACHE.registered.find(x=>x.student_id===state.profile.id && x.course_id===r.course_id);
+    const sem = reg ? reg.semester : (state.profile.semester||'Unknown');
+    (semMap[sem] = semMap[sem]||[]).push(r);
+  });
+  const sems = Object.keys(semMap).sort();
+  let totalPoints=0,totalCredits=0;
+  const rows = sems.map(sem=>{
+    let pts=0,cr=0;
+    semMap[sem].forEach(r=>{
+      const c = courseById(r.course_id); const credit = c?Number(c.credits):3;
+      pts += gradePoint(r.grade)*credit; cr += credit;
+    });
+    const gpa = cr ? pts/cr : 0;
+    totalPoints += pts; totalCredits += cr;
+    return {sem, gpa, credits:cr, courses:semMap[sem].length};
+  });
+  const cgpa = totalCredits ? totalPoints/totalCredits : 0;
+  return `<div class="section-head"><div><h2>Semester Wise Result</h2></div></div>
+    <div class="grid grid-2" style="margin-bottom:16px">
+      <div class="stat"><div class="num">${cgpa.toFixed(2)}</div><div class="lbl">Overall CGPA</div></div>
+      <div class="stat"><div class="num">${totalCredits}</div><div class="lbl">Total Credits</div></div>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Semester</th><th>Courses</th><th>Credits</th><th>GPA</th></tr></thead>
+      <tbody>${rows.length ? rows.map(r=>`<tr>
+        <td>${esc(r.sem)}</td><td>${r.courses}</td><td>${r.credits}</td>
+        <td><b>${r.gpa.toFixed(2)}</b></td></tr>`).join('') : `<tr><td colspan="4" class="empty">No result data.</td></tr>`}</tbody>
+    </table></div>`;
+}
+
+function pageCgpa(){
+  const grades = ['A+','A','A-','B+','B','B-','C+','C','D','F'];
+  return `<div class="section-head"><div><h2>CGPA Calculator</h2><div class="sub">Estimate your semester GPA and overall CGPA</div></div></div>
+    <div class="card">
+      <div id="cgpaRows">
+        <div class="row" style="margin-bottom:8px">
+          <input type="number" placeholder="Credits" class="cgpa-credit" value="3">
+          <select class="cgpa-grade">${grades.map(g=>`<option>${g}</option>`).join('')}</select>
+        </div>
+      </div>
+      <button class="btn-ghost btn-sm" onclick="app.addCgpaRow()">+ Add Course</button>
+      <button class="btn-primary" style="margin-left:8px" onclick="app.calcCgpa()">Calculate</button>
+      <div id="cgpaResult" style="margin-top:16px;font-size:20px;font-weight:700"></div>
+    </div>`;
+}
+
+function pageMaterials(){
+  return `<div class="section-head"><div><h2>Study Material</h2><div class="sub">Lecture slides and notes</div></div></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Course</th><th>Title</th><th>Uploaded</th><th>File</th></tr></thead>
+      <tbody>${CACHE.materials.length ? CACHE.materials.map(m=>`<tr>
+        <td>${esc(courseLabel(m.course_id))}</td><td>${esc(m.title)}</td>
+        <td>${fmtDate(m.upload_date)}</td>
+        <td>${m.file_path
+          ? `<button class="btn-sm btn-primary" onclick="app.downloadMaterial('${esc(m.file_path)}','${esc(m.file_name||'file')}')">Download</button>`
+          : m.file_url ? `<a href="${esc(m.file_url)}" target="_blank">Download</a>` : '—'}</td>
+      </tr>`).join('') : `<tr><td colspan="4" class="empty">No materials uploaded.</td></tr>`}</tbody>
+    </table></div>`;
+}
+
+function pageContact(){
+  return `<div class="section-head"><div><h2>Contact Us</h2><div class="sub">Uttara University – FDT Department</div></div></div>
+    <div class="grid grid-2">
+      <div class="card"><h3>University</h3>
+        <div style="line-height:1.9;font-size:13.5px">
+          <b>Uttara University</b><br>Holding 77, Beribadh Road, Turag<br>Uttara, Dhaka 1230, Bangladesh<br><br>
+          📞 01872607360-69<br>✉️ info@uttarauniversity.edu.bd<br>🌐 www.uttara.ac.bd
+        </div></div>
+      <div class="card"><h3>Department Office</h3>
+        <div style="line-height:1.9;font-size:13.5px">
+          <b>Dept. of Fashion Design & Technology</b><br>Room 401, Academic Building<br><br>
+          📞 01872607360-69<br>✉️ chair.fdt@uttara.ac.bd<br>🕘 Sun–Thu, 9:00 AM – 5:00 PM
+        </div></div>
+    </div>
+    <div class="card" style="margin-top:16px"><h3>Location</h3>
+      <iframe src="https://www.google.com/maps?q=Uttara+University+Dhaka&output=embed" width="100%" height="300"
+        style="border:0;border-radius:8px" loading="lazy"></iframe>
+    </div>`;
+}
+
+/* ============================================================
+   ADMIN
+   ============================================================ */
+const ADMIN_NAV = [
+  {k:'admin-dashboard', label:'Dashboard'},
+  {k:'admin-notices', label:'Notices'},
+  {k:'admin-routines', label:'Routine / Exams'},
+  {k:'admin-events', label:'Events'},
+  {k:'admin-buses', label:'Buses'},
+  {k:'admin-courses', label:'Courses'},
+  {k:'admin-registered', label:'Registrations'},
+  {k:'admin-results', label:'Results'},
+  {k:'admin-attendance', label:'Attendance'},
+  {k:'admin-assignments', label:'Assignments'},
+  {k:'admin-materials', label:'Study Materials'},
+  {k:'admin-teachers', label:'Teachers'},
+  {k:'admin-staff', label:'Staff'}
+];
+function renderAdminLayout(){
+  return `<div class="app">
+    <aside class="sidebar ${state.sidebarOpen?'open':''}">
+      <h2>FDT Admin<small>Uttara University</small></h2>
+      ${ADMIN_NAV.map(n=>`<div class="nav-item ${state.adminRoute===n.k?'active':''}" data-route="${n.k}">${n.label}</div>`).join('')}
+      <div class="nav-section">Account</div>
+      <div class="nav-item" onclick="app.logout()">Logout</div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:12px;flex:1">
+          <button class="menu-btn" id="menuBtn">☰</button>
+          <h1>${pageTitle(state.adminRoute)}</h1>
+        </div>
+        <div class="user-info">
+          <div class="avatar" style="background:#0f172a">A</div>
+          <div><div style="font-weight:600">${esc(state.profile.name)}</div>
+            <div style="font-size:11px;color:var(--muted)">Administrator</div></div>
+        </div>
+      </div>
+      <div class="content">${renderAdminPage()}</div>
+    </div>
+    ${state.modal ? renderModal() : ''}
+  </div>`;
+}
+
+function renderAdminPage(){
+  switch(state.adminRoute){
+    case 'admin-dashboard': return adminDashboard();
+    case 'admin-notices': return adminEntity('notices','Notices');
+    case 'admin-routines': return adminEntity('routines','Routine / Exams');
+    case 'admin-events': return adminEntity('events','Events');
+    case 'admin-buses': return adminEntity('buses','Buses');
+    case 'admin-courses': return adminEntity('courses','Courses');
+    case 'admin-registered': return adminEntity('registered_courses','Registrations');
+    case 'admin-results': return adminEntity('results','Results');
+    case 'admin-attendance': return adminAttendance();
+    case 'admin-assignments': return adminEntity('assignments','Assignments');
+    case 'admin-materials': return adminEntity('materials','Study Materials');
+    case 'admin-teachers': return adminEntity('teachers','Teachers');
+    case 'admin-staff': return adminEntity('staff','Staff');
+    default: return adminDashboard();
+  }
+}
+
+function adminDashboard(){
+  return `<div class="grid grid-4" style="margin-bottom:20px">
+      <div class="stat"><div class="num">${CACHE.courses.length}</div><div class="lbl">Courses</div></div>
+      <div class="stat"><div class="num">${CACHE.teachers.length}</div><div class="lbl">Teachers</div></div>
+      <div class="stat"><div class="num">${CACHE.buses.length}</div><div class="lbl">Buses</div></div>
+      <div class="stat"><div class="num">${CACHE.notices.length}</div><div class="lbl">Notices</div></div>
+    </div>
+    <div class="grid grid-2">
+      <div class="card"><h3>Quick Actions</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          <button class="btn-primary" onclick="app.openModal('notices')">+ Notice</button>
+          <button class="btn-primary" onclick="app.openModal('events')">+ Event</button>
+          <button class="btn-primary" onclick="app.openModal('buses')">+ Bus</button>
+          <button class="btn-primary" onclick="app.openModal('routines')">+ Routine</button>
+          <button class="btn-primary" onclick="app.openModal('results')">+ Result</button>
+          <button class="btn-primary" onclick="app.openModal('assignments')">+ Assignment</button>
+        </div></div>
+      <div class="card"><h3>Pinned Notices</h3>
+        ${CACHE.notices.filter(n=>n.pinned).map(n=>`<div class="pin"><b>${esc(n.title)}</b>
+          <div style="font-size:12.5px">${esc(n.content)}</div></div>`).join('') || '<div class="empty">None</div>'}
+      </div></div>`;
+}
+
+function adminAttendance(){
+  return `<div class="section-head">
+      <div><h2>Attendance</h2><div class="sub">Mark attendance by course and date</div></div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <h3>Mark Attendance</h3>
+      <div class="row" style="margin-bottom:10px">
+        <select id="att_course">${CACHE.courses.map(c=>`<option value="${c.id}">${esc(c.code)} – ${esc(c.title)}</option>`).join('')}</select>
+        <input id="att_date" type="date" value="${todayStr()}">
+      </div>
+      <div id="att_students">
+        ${CACHE.profiles.filter(p=>p.role==='student').map(p=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+            <div style="flex:1">${esc(p.name)} <span style="color:var(--muted);font-size:12px">(${esc(p.student_id||'')})</span></div>
+            <select data-student="${p.id}" class="att_status" style="width:130px">
+              <option value="present">Present</option>
+              <option value="absent">Absent</option>
+              <option value="late">Late</option>
+              <option value="excused">Excused</option>
+            </select>
+          </div>`).join('')}
+      </div>
+      <button class="btn-primary" style="margin-top:12px" onclick="app.saveAttendance()">Save Attendance</button>
+    </div>`;
+}
+
+const SCHEMAS = {
+  notices: {label:'Notice', table:'notices', fields:[
+      {k:'title',label:'Title',type:'text',req:true},
+      {k:'content',label:'Content',type:'textarea',req:true},
+      {k:'date',label:'Date',type:'date',req:true},
+      {k:'pinned',label:'Pinned',type:'checkbox'},
+      {k:'audience',label:'Audience',type:'select',options:['all','students','teachers']}],
+    columns:['title','date','pinned'], colLabels:{title:'Title',date:'Date',pinned:'Pinned'}},
+  events: {label:'Event', table:'events', fields:[
+      {k:'title',label:'Title',type:'text',req:true},
+      {k:'description',label:'Description',type:'textarea'},
+      {k:'date',label:'Date',type:'date',req:true},
+      {k:'time',label:'Time',type:'time'},
+      {k:'location',label:'Location',type:'text'}],
+    columns:['title','date','time','location'], colLabels:{title:'Title',date:'Date',time:'Time',location:'Location'}},
+  buses: {label:'Bus', table:'buses', fields:[
+      {k:'bus_number',label:'Bus Number',type:'text',req:true},
+      {k:'route',label:'Route',type:'text',req:true},
+      {k:'arrival_time',label:'Arrival Time',type:'time'},
+      {k:'departure_time',label:'Departure Time',type:'time'},
+      {k:'driver_name',label:'Driver Name',type:'text'},
+      {k:'driver_contact',label:'Driver Contact',type:'text'}],
+    columns:['bus_number','route','arrival_time','departure_time','driver_contact'],
+    colLabels:{bus_number:'Bus',route:'Route',arrival_time:'Arrival',departure_time:'Departure',driver_contact:'Driver Contact'}},
+  courses: {label:'Course', table:'courses', fields:[
+      {k:'code',label:'Course Code',type:'text',req:true},
+      {k:'title',label:'Title',type:'text',req:true},
+      {k:'credits',label:'Credits',type:'number',req:true},
+      {k:'category',label:'Category',type:'select',options:['core','ged','elective']},
+      {k:'prereq',label:'Prerequisite',type:'text'},
+      {k:'teacher_id',label:'Assigned Teacher',type:'select',optionsFrom:'teachers',optionLabel:t=>t.name,optionValue:t=>t.id},
+      {k:'description',label:'Description',type:'textarea'}],
+    columns:['code','title','credits','category','teacher_id'], colLabels:{code:'Code',title:'Title',credits:'Credits',category:'Category',teacher_id:'Teacher'},
+    formatters:{teacher_id:v=>teacherName(v)}},
+  teachers: {label:'Teacher', table:'teachers', fields:[
+      {k:'name',label:'Name',type:'text',req:true},
+      {k:'designation',label:'Designation',type:'text'},
+      {k:'email',label:'Email',type:'text'},
+      {k:'phone',label:'Phone',type:'text'},
+      {k:'office',label:'Office Room',type:'text'}],
+    columns:['name','designation','email','phone','office'],
+    colLabels:{name:'Name',designation:'Designation',email:'Email',phone:'Phone',office:'Office'}},
+  staff: {label:'Staff', table:'staff', fields:[
+      {k:'name',label:'Name',type:'text',req:true},
+      {k:'role',label:'Role',type:'text'},
+      {k:'email',label:'Email',type:'text'},
+      {k:'phone',label:'Phone',type:'text'}],
+    columns:['name','role','email','phone'], colLabels:{name:'Name',role:'Role',email:'Email',phone:'Phone'}},
+  routines: {label:'Routine', table:'routines', fields:[
+      {k:'type',label:'Type',type:'select',options:['class','exam','quiz','presentation','assignment'],req:true},
+      {k:'title',label:'Title',type:'text'},
+      {k:'course_id',label:'Course',type:'select',optionsFrom:'courses',optionLabel:c=>c.code+' – '+c.title,optionValue:c=>c.id,req:true},
+      {k:'teacher_id',label:'Teacher',type:'select',optionsFrom:'teachers',optionLabel:t=>t.name,optionValue:t=>t.id},
+      {k:'day',label:'Day (for class)',type:'select',options:['','Sunday','Monday','Tuesday','Wednesday','Thursday','Saturday']},
+      {k:'date',label:'Date (for exams)',type:'date'},
+      {k:'start_time',label:'Start Time',type:'time'},
+      {k:'end_time',label:'End Time',type:'time'},
+      {k:'room',label:'Room',type:'text'}],
+    columns:['type','title','course_id','day','date','start_time','room'],
+    colLabels:{type:'Type',title:'Title',course_id:'Course',day:'Day',date:'Date',start_time:'Start',room:'Room'},
+    formatters:{course_id:v=>courseLabel(v), date:v=>fmtDate(v)}},
+  registered_courses: {label:'Registration', table:'registered_courses', fields:[
+      {k:'student_id',label:'Student',type:'select',optionsFrom:'profiles',filter:u=>u.role==='student',
+        optionLabel:u=>u.name+' ('+(u.student_id||'')+')',optionValue:u=>u.id,req:true},
+      {k:'course_id',label:'Course',type:'select',optionsFrom:'courses',optionLabel:c=>c.code+' – '+c.title,optionValue:c=>c.id,req:true},
+      {k:'semester',label:'Semester',type:'select',options:['Fall 2026','Spring 2027','Summer 2027'],req:true}],
+    columns:['student_id','course_id','semester'], colLabels:{student_id:'Student',course_id:'Course',semester:'Semester'},
+    formatters:{student_id:v=>studentName(v), course_id:v=>courseLabel(v)}},
+  results: {label:'Result', table:'results', fields:[
+      {k:'student_id',label:'Student',type:'select',optionsFrom:'profiles',filter:u=>u.role==='student',
+        optionLabel:u=>u.name,optionValue:u=>u.id,req:true},
+      {k:'course_id',label:'Course',type:'select',optionsFrom:'courses',optionLabel:c=>c.code+' – '+c.title,optionValue:c=>c.id,req:true},
+      {k:'quiz1',label:'Quiz 1',type:'number'},{k:'quiz2',label:'Quiz 2',type:'number'},
+      {k:'quiz3',label:'Quiz 3',type:'number'},{k:'quiz_avg',label:'Quiz Average',type:'number'},
+      {k:'mid_term',label:'Mid Term',type:'number'},{k:'final',label:'Final',type:'number'},
+      {k:'total',label:'Total',type:'number'},
+      {k:'grade',label:'Grade',type:'select',options:['A+','A','A-','B+','B','B-','C+','C','D','F']}],
+    columns:['student_id','course_id','quiz_avg','mid_term','final','total','grade'],
+    colLabels:{student_id:'Student',course_id:'Course',quiz_avg:'Quiz Avg',mid_term:'Mid',final:'Final',total:'Total',grade:'Grade'},
+    formatters:{student_id:v=>studentName(v), course_id:v=>courseLabel(v)}},
+  assignments: {label:'Assignment', table:'assignments', fields:[
+      {k:'course_id',label:'Course',type:'select',optionsFrom:'courses',optionLabel:c=>c.code+' – '+c.title,optionValue:c=>c.id,req:true},
+      {k:'title',label:'Title',type:'text',req:true},
+      {k:'description',label:'Description',type:'textarea'},
+      {k:'due_date',label:'Due Date & Time',type:'datetime-local',req:true},
+      {k:'max_marks',label:'Max Marks',type:'number'}],
+    columns:['course_id','title','due_date','max_marks'],
+    colLabels:{course_id:'Course',title:'Title',due_date:'Due',max_marks:'Max'},
+    formatters:{course_id:v=>courseLabel(v)}},
+  materials: {label:'Material', table:'materials', fields:[
+      {k:'course_id',label:'Course',type:'select',optionsFrom:'courses',optionLabel:c=>c.code+' – '+c.title,optionValue:c=>c.id,req:true},
+      {k:'title',label:'Title',type:'text',req:true},
+      {k:'file',label:'File (PDF, PPT, DOC, ZIP)',type:'file'},
+      {k:'upload_date',label:'Upload Date',type:'date'}],
+    columns:['course_id','title','upload_date','file_name'],
+    colLabels:{course_id:'Course',title:'Title',upload_date:'Uploaded',file_name:'File'},
+    formatters:{course_id:v=>courseLabel(v)}}
+};
+
+function adminEntity(entity, title){
+  const schema = SCHEMAS[entity];
+  if(!schema) return '<div class="empty">Unknown entity.</div>';
+  const list = CACHE[entity==='registered_courses'?'registered':entity] || [];
+  return `<div class="section-head">
+      <div><h2>${esc(title)}</h2><div class="sub">${list.length} record(s)</div></div>
+      <button class="btn-primary" onclick="app.openModal('${entity}')">+ Add ${esc(schema.label)}</button>
+    </div>
+    <div class="table-wrap"><table>
+      <thead><tr>${schema.columns.map(c=>`<th>${esc(schema.colLabels[c]||c)}</th>`).join('')}<th>Actions</th></tr></thead>
+      <tbody>${list.length ? list.map(row=>`<tr>
+        ${schema.columns.map(c=>{
+          let v = row[c];
+          if(schema.formatters && schema.formatters[c]) v = schema.formatters[c](v);
+          else if(typeof v === 'boolean') v = v ? '✅' : '—';
+          else if(c.includes('date') || c==='due_date') v = fmtDate(v);
+          else v = esc(v == null || v === '' ? '—' : v);
+          return `<td>${v}</td>`;
+        }).join('')}
+        <td>
+          <button class="btn-sm btn-ghost" onclick="app.openModal('${entity}','${row.id}')">Edit</button>
+          <button class="btn-sm btn-danger" onclick="app.deleteRecord('${entity}','${row.id}')">Delete</button>
+        </td></tr>`).join('') : `<tr><td colspan="${schema.columns.length+1}" class="empty">No records.</td></tr>`}</tbody>
+    </table></div>`;
+}
+
+function renderModal(){
+  const {entity, record, mode} = state.modal;
+  const schema = SCHEMAS[entity];
+  if(!schema) return '';
+  const isEdit = mode==='edit';
+  const data = record || {};
+  return `<div class="modal-bg" onclick="if(event.target===this) app.closeModal()">
+    <div class="modal">
+      <h3>${isEdit?'Edit':'Add'} ${esc(schema.label)}</h3>
+      ${schema.fields.map(f=>renderField(f,data)).join('')}
+      <div class="modal-actions">
+        <button class="btn-ghost" onclick="app.closeModal()">Cancel</button>
+        <button class="btn-primary" onclick="app.saveModal()">${isEdit?'Update':'Create'}</button>
+      </div>
+    </div></div>`;
+}
+function renderField(f, data){
+  const v = data[f.k] != null ? data[f.k] : '';
+  const id = 'fld_'+f.k;
+  let input = '';
+  if(f.type==='textarea') input = `<textarea id="${id}" rows="3">${esc(v)}</textarea>`;
+  else if(f.type==='file') input = `<input id="${id}" type="file">
+    ${data.file_name ? `<div style="font-size:12px;color:var(--muted);margin-top:4px">Current: ${esc(data.file_name)}</div>`:''}`;
+  else if(f.type==='select'){
+    let opts = [];
+    if(f.optionsFrom){
+      let arr = CACHE[f.optionsFrom]||[];
+      if(f.filter) arr = arr.filter(f.filter);
+      opts = arr.map(o=>({val:f.optionValue?f.optionValue(o):o, label:f.optionLabel?f.optionLabel(o):o}));
+    } else opts = (f.options||[]).map(o=>({val:o,label:o}));
+    input = `<select id="${id}">${opts.map(o=>`<option value="${esc(o.val)}" ${String(o.val)===String(v)?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`;
+  } else if(f.type==='checkbox') input = `<input id="${id}" type="checkbox" style="width:auto" ${v?'checked':''}>`;
+  else if(f.type==='datetime-local'){
+    const dv = v ? new Date(v).toISOString().slice(0,16) : '';
+    input = `<input id="${id}" type="datetime-local" value="${dv}">`;
+  }
+  else input = `<input id="${id}" type="${f.type}" value="${esc(v)}">`;
+  return `<div class="field"><label>${esc(f.label)}${f.req?' *':''}</label>${input}</div>`;
+}
+
+/* ---------- FILE UPLOAD ---------- */
+async function uploadStudyMaterial(file, courseId){
+  const ext = file.name.split('.').pop();
+  const fileName = `${courseId}/${Date.now()}.${ext}`;
+  const { error } = await db.storage.from('study-materials').upload(fileName, file, {
+    cacheControl:'3600', upsert:false, contentType:file.type
+  });
+  if(error){ toast('Upload failed: '+error.message); return null; }
+  return { file_path:fileName, file_name:file.name, file_size:file.size };
+}
+
+async function uploadAssignment(file, assignmentId){
+  const userId = state.profile.id;
+  const ext = file.name.split('.').pop();
+  const fileName = `${userId}/${assignmentId}.${ext}`;
+  const { error } = await db.storage.from('assignments').upload(fileName, file, {
+    cacheControl:'3600', upsert:true, contentType:file.type
+  });
+  if(error){ toast('Submission failed: '+error.message); return null; }
+  return fileName;
+}
+
+/* ---------- APP API ---------- */
+window.app = {
+  setAuthTab(t){ authTab=t; render(); },
+  goSearchResult(i){
+    const r = state.searchResults[i];
+    if(!r) return;
+    state.route = r.route; state.searchResults=[]; state.searchQuery=''; render();
+  },
+  async doLogin(){
+    const email = ($('#li_email')?.value||'').trim();
+    const pass = $('#li_pass')?.value||'';
+    const { error } = await db.auth.signInWithPassword({ email, password: pass });
+    if(error){ $('#authErr').textContent = error.message; return; }
+  },
+  async doSignup(){
+    const data = {
+      name:$('#su_name').value.trim(), student_id:$('#su_sid').value.trim(),
+      email:$('#su_email').value.trim(), semester:$('#su_sem').value,
+      batch:$('#su_batch').value.trim(), password:$('#su_pass').value
+    };
+    if(!data.name||!data.email||!data.password||!data.student_id){
+      $('#authErr').textContent='Please fill all required fields.'; return;
+    }
+    const { error } = await db.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: { data: { name:data.name, student_id:data.student_id, role:'student' } }
+    });
+    if(error){ $('#authErr').textContent = error.message; return; }
+    toast('Account created! Check your email to confirm.');
+  },
+  async logout(){ await db.auth.signOut(); state.user=null; state.profile=null; render(); },
+  setSem(v){ state.semFilter=v; render(); },
+  addCgpaRow(){
+    const grades = ['A+','A','A-','B+','B','B-','C+','C','D','F'];
+    const row = document.createElement('div');
+    row.className='row'; row.style.marginBottom='8px';
+    row.innerHTML = `<input type="number" placeholder="Credits" class="cgpa-credit" value="3">
+      <select class="cgpa-grade">${grades.map(g=>`<option>${g}</option>`).join('')}</select>`;
+    document.getElementById('cgpaRows').appendChild(row);
+  },
+  calcCgpa(){
+    const credits = [...document.querySelectorAll('.cgpa-credit')].map(i=>Number(i.value)||0);
+    const grades = [...document.querySelectorAll('.cgpa-grade')].map(s=>s.value);
+    const points = {'A+':4,'A':3.75,'A-':3.5,'B+':3.25,'B':3,'B-':2.75,'C+':2.5,'C':2.25,'D':2,'F':0};
+    let totPts=0, totCr=0;
+    credits.forEach((cr,i)=>{ totPts += (points[grades[i]]||0)*cr; totCr += cr; });
+    const gpa = totCr ? totPts/totCr : 0;
+    document.getElementById('cgpaResult').textContent = `GPA: ${gpa.toFixed(2)} (${totCr} credits)`;
+  },
+  async submitAssignment(assignmentId){
+    const file = document.getElementById('sub_file_'+assignmentId)?.files?.[0];
+    if(!file){ toast('Select a file first.'); return; }
+    const path = await uploadAssignment(file, assignmentId);
+    if(!path) return;
+    const asg = CACHE.assignments.find(a=>a.id===assignmentId);
+    const isLate = new Date() > new Date(asg.due_date);
+    const { error } = await db.from('submissions').upsert({
+      assignment_id: assignmentId,
+      student_id: state.profile.id,
+      file_path: path,
+      file_name: file.name,
+      submitted_at: new Date().toISOString(),
+      status: isLate ? 'late' : 'submitted'
+    }, { onConflict: 'assignment_id,student_id' });
+    if(error){ toast(error.message); return; }
+    toast('Submitted!'); await loadAllData(); render();
+  },
+  async downloadMaterial(path, name){
+    const { data, error } = await db.storage.from('study-materials').createSignedUrl(path, 3600);
+    if(error){ toast(error.message); return; }
+    const a = document.createElement('a');
+    a.href = data.signedUrl; a.download = name; a.target='_blank'; a.click();
+  },
+  async saveAttendance(){
+    const courseId = $('#att_course').value;
+    const date = $('#att_date').value;
+    const statuses = [...document.querySelectorAll('.att_status')].map(s=>({
+      student_id: s.getAttribute('data-student'), status: s.value
+    }));
+    const rows = statuses.map(s=>({
+      student_id: s.student_id, course_id: courseId, date, status: s.status,
+      marked_by: state.profile.id
+    }));
+    const { error } = await db.from('attendance').upsert(rows, { onConflict: 'student_id,course_id,date' });
+    if(error){ toast(error.message); return; }
+    toast('Attendance saved for '+date);
+  },
+  exportIcs(){
+    const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//FDT Portal//EN'];
+    const dayMap = {Sunday:'SU',Monday:'MO',Tuesday:'TU',Wednesday:'WE',Thursday:'TH',Saturday:'SA'};
+    CACHE.routines.filter(r=>r.type==='class').forEach(r => {
+      const d = dayMap[r.day]; if(!d) return;
+      const st = (r.start_time||'09:00').replace(':','') + '00';
+      const et = (r.end_time||'10:00').replace(':','') + '00';
+      lines.push('BEGIN:VEVENT');
+      lines.push(`SUMMARY:${courseLabel(r.course_id).replace(/,/g,'')}`);
+      lines.push(`DTSTART:${todayStr().replace(/-/g,'')}T${st}`);
+      lines.push(`DTEND:${todayStr().replace(/-/g,'')}T${et}`);
+      lines.push(`RRULE:FREQ=WEEKLY;BYDAY=${d}`);
+      lines.push(`LOCATION:Room ${r.room||''}`);
+      lines.push('END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    const blob = new Blob([lines.join('\r\n')], {type:'text/calendar'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href=url; a.download='fdt-routine.ics'; a.click();
+  },
+  openModal(entity, id){
+    let record=null, mode='create';
+    if(id){
+      const key = entity==='registered_courses'?'registered':entity;
+      record = (CACHE[key]||[]).find(x=>x.id===id); mode='edit';
+    }
+    state.modal={entity, record, mode}; render();
+  },
+  closeModal(){ state.modal=null; render(); },
+  async saveModal(){
+    const {entity, record, mode} = state.modal;
+    const schema = SCHEMAS[entity];
+    if(!schema) return;
+    const data = {};
+    let fileToUpload = null;
+    schema.fields.forEach(f=>{
+      const el = document.getElementById('fld_'+f.k); if(!el) return;
+      if(f.type==='checkbox') data[f.k]=el.checked;
+      else if(f.type==='number') data[f.k] = el.value===''?null:Number(el.value);
+      else if(f.type==='file'){ if(el.files[0]) fileToUpload = el.files[0]; }
+      else data[f.k]=el.value || null;
+    });
+    const missing = schema.fields.filter(f=>f.req && f.type!=='file' && (data[f.k]===undefined||data[f.k]===null||data[f.k]===''));
+    if(missing.length){ toast('Please fill: '+missing.map(f=>f.label).join(', ')); return; }
+    if(entity==='materials' && fileToUpload){
+      const up = await uploadStudyMaterial(fileToUpload, data.course_id);
+      if(!up) return;
+      Object.assign(data, up);
+    }
+    if(mode==='edit'){
+      const { error } = await db.from(schema.table).update(data).eq('id', record.id);
+      if(error){ toast(error.message); return; }
+      toast('Updated');
+    } else {
+      const { error } = await db.from(schema.table).insert(data);
+      if(error){ toast(error.message); return; }
+      toast('Created');
+    }
+    state.modal=null; await loadAllData(); render();
+  },
+  async deleteRecord(entity, id){
+    const schema = SCHEMAS[entity];
+    if(!schema) return;
+    if(!confirm('Delete this record?')) return;
+    const { error } = await db.from(schema.table).delete().eq('id', id);
+    if(error){ toast(error.message); return; }
+    await loadAllData(); render(); toast('Deleted');
+  }
+};
+
+/* ---------- PWA ---------- */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
+
+/* ---------- BOOT ---------- */
+(async () => {
+  await initAuth();
+  if(state.user && state.profile){ await loadAllData(); subscribeRealtime(); }
+  render();
+})();
+</script>
+</body>
+</html>
